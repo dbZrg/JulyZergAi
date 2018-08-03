@@ -16,6 +16,7 @@ public:
 	bool TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type, sc2::Point2D base_location);
 	bool TryBuildSpawningPool();
 	bool TryBuildBaneling();
+	bool TryBuildSpire();
 
 	bool OrderInProgress( sc2::AbilityID ability_id);  // add argument (Unit*), make it general
 };

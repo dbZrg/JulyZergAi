@@ -99,12 +99,20 @@ void ProductionManager::OviProduction(const sc2::Unit *larva)
 void ProductionManager::ArmyProduction(const sc2::Unit *larva)
 {
 	const sc2::Units spawning_pool = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPAWNINGPOOL));
+	const sc2::Units spire = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
+	const sc2::Units mutalisk = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
 	int32_t mineral_count = bot.Observation()->GetMinerals();
+	int32_t gas_count = bot.Observation()->GetVespene();
 
-	if ( mineral_count > 99 && spawning_pool.size() > 0 && bot.Observation()->GetFoodUsed()<200) {
+	if (mineral_count > 99 && gas_count > 99  && spire.size() > 0 && bot.Observation()->GetFoodUsed()<200 && mutalisk.size() < 20 ) {
+		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_MUTALISK);
+		return;
+	}
+	if ( mineral_count > 99 && spawning_pool.size() > 0 && bot.Observation()->GetFoodUsed()<160) {
 		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_ZERGLING);
 		return;
 	}
+	
 }
 
 ProductionState ProductionManager::GetProductionState()

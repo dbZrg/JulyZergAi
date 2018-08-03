@@ -9,26 +9,32 @@ class ArmyManagment
 public:
 	ArmyManagment(ZZerg &bot);
 	~ArmyManagment();
-
+	
 	void init();
-
 	void ArmyManagmentAll();
+	
 	void MainArmyManager();
+	void MutaManager();
 	void QueenDefenceManager();
 	void HarassManager();
 	void ScoutManager();
-	void MorphUnits();
+	void MorphUnits(); // move to production
 	void ClusterTest();
 	
 	enum army_state { defend, attack, harass };
 	army_state main_army;
-	/*std::pair <sc2::Point3D, std::vector<sc2::Unit>> GetClusterToAttack();*/
 	float GetClusterValue(sc2::Point3D cluster_pos, std::vector<sc2::Unit> &units);
 
+	//! return nearest enemy unit to *unit
 	const sc2::Unit * FindNearestEnemy(const sc2::Unit* unit);
+	//! return nearest enemy army unit to *unit
 	const sc2::Unit * FindNearestEnemyArmy(const sc2::Unit* unit);
+	//! return queen under 50% hp in radius
 	const sc2::Unit * FindLowHpQueenInRad(const sc2::Unit* unit,float radius);
+	//! return nearest enemy base from bot starting location
 	const sc2::Unit * FindNearestEnemyBase();
+
+	std::pair<sc2::Point3D, std::vector<sc2::Unit>> FindNearstEnemyCluster(const sc2::Unit *unit, std::vector<std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_clusters);
 
 
 	bool IsStructure(const sc2::Unit *unit)const;
@@ -41,11 +47,16 @@ public:
 	std::vector<sc2::Point2D>									lingbane_harass_pos_;
 	sc2::Units													harass_squad_1;
 	sc2::Units													harass_squad_2;
+	sc2::Units													muta_squad_1;
+	sc2::Units													muta_squad_2;
 
 	const sc2::Unit *scout;
 	bool attack_sent;
 	int scout_pos_index;
 	bool squad_assigned;
 	bool we_are_under_attack;
+	bool muta_squad_1_sent;
+	bool muta_squad_2_sent;
+	
 };
 
