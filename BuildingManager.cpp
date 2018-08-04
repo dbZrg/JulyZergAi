@@ -51,13 +51,13 @@ void BuildingManager::BuildingManagerStep()
 		}
 
 		if (!OrderInProgress(sc2::ABILITY_ID::BUILD_EXTRACTOR) && extractors.size() == 0) {
-			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE, bot.main_base->pos)) {
+			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE, bot.main_base->pos,true)) {
 				std::cout << "---------------------extractor first" << std::endl;
 				return;
 			}
 		}
 		if (lair.size() > 0 && extractors.size()  < hatches.size() * 2 ) {
-			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE,sc2::GetRandomEntry(hatches)->pos)) {
+			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE,sc2::GetRandomEntry(hatches)->pos, false)) {
 				std::cout << "---------------------build all extractors" << std::endl;
 				return;
 			}
@@ -147,7 +147,7 @@ bool BuildingManager::TryBuildStructure(sc2::AbilityID ability_type_for_structur
 }
 
 //Try to build a structure based on tag, Used mostly for Vespene, since the pathing check will fail even though the geyser is "Pathable"
-bool BuildingManager::TryBuildStructure(sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Tag location_tag) {
+bool BuildingManager::TryBuildStructure(sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Tag location_tag,bool check_if_building) {
 	const sc2::ObservationInterface* observation = bot.Observation();
 	sc2::Units workers = observation->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(unit_type));
 	const sc2::Unit* target = observation->GetUnit(location_tag);
@@ -157,10 +157,12 @@ bool BuildingManager::TryBuildStructure(sc2::AbilityID ability_type_for_structur
 	}
 
 	// Check to see if there is already a worker heading out to build it
-	for (const auto& worker : workers) {
-		for (const auto& order : worker->orders) {
-			if (order.ability_id == ability_type_for_structure) {
-				return false;
+	if (check_if_building) {
+		for (const auto& worker : workers) {
+			for (const auto& order : worker->orders) {
+				if (order.ability_id == ability_type_for_structure) {
+					return false;
+				}
 			}
 		}
 	}
@@ -206,7 +208,7 @@ bool BuildingManager::TryExpand(sc2::AbilityID build_ability, sc2::UnitTypeID wo
 }
 
 //Tries to build a geyser for a base
-bool BuildingManager::TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type, sc2::Point2D base_location) {
+bool BuildingManager::TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type, sc2::Point2D base_location, bool check_if_building) {
 	
 	sc2::Units geysers = bot.Observation()->GetUnits(sc2::Unit::Alliance::Neutral, sc2::IsUnit(sc2::UNIT_TYPEID::NEUTRAL_VESPENEGEYSER));
 	sc2::Units geysers2 = bot.Observation()->GetUnits(sc2::Unit::Alliance::Neutral, sc2::IsUnit(sc2::UNIT_TYPEID::NEUTRAL_SPACEPLATFORMGEYSER));
@@ -230,7 +232,8 @@ bool BuildingManager::TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID 
 	if (closestGeyser == 0) {
 		return false;
 	}
-	return TryBuildStructure(build_ability, worker_type, closestGeyser);
+	if (check_if_building) { return TryBuildStructure(build_ability, worker_type, closestGeyser,true ); }
+	else { return TryBuildStructure(build_ability, worker_type, closestGeyser, false); }
 	
 }
 

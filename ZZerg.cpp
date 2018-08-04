@@ -79,7 +79,7 @@ void ZZerg::OnStep()
 	PerfMeterEnd("Enemy Info : ");
 
 	PrintGlobals();
-	GetDebug();
+	/*GetDebug();*/
 	frame++;
 }
 
@@ -354,7 +354,7 @@ size_t ZZerg::GetActiveCreepCount()
 
 const size_t ZZerg::GetCurrnetWorkerLimit(bool with_build_under_const) const
 {
-	sc2::Units bases = Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_HATCHERY));
+	sc2::Units bases = Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_HATCHERY, sc2::UNIT_TYPEID::ZERG_LAIR, sc2::UNIT_TYPEID::ZERG_HIVE }));
 	sc2::Units extractors = Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EXTRACTOR));
 	size_t worker_limit = 0;
 	size_t build_under_const = 0;

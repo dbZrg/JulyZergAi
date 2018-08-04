@@ -11,9 +11,9 @@ public:
 	void BuildingManagerStep();
 
 	bool TryBuildStructure(sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Point2D location, bool isExpansion = false);
-	bool TryBuildStructure( sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Tag location_tag);
+	bool TryBuildStructure( sc2::AbilityID ability_type_for_structure, sc2::UnitTypeID unit_type, sc2::Tag location_tag,bool check_if_building);
 	bool TryExpand(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type);
-	bool TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type, sc2::Point2D base_location);
+	bool TryBuildGas(sc2::AbilityID build_ability, sc2::UnitTypeID worker_type, sc2::Point2D base_location,bool check_if_building);
 	bool TryBuildSpawningPool();
 	bool TryBuildBaneling();
 	bool TryBuildSpire();
