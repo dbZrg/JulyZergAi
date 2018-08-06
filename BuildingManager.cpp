@@ -56,7 +56,7 @@ void BuildingManager::BuildingManagerStep()
 				return;
 			}
 		}
-		if (lair.size() > 0 && extractors.size()  < hatches.size() * 2 ) {
+		if (lair.size() > 0 && extractors.size()  < hatches.size() * 2  && bot.EconomyManager().GetActiveGasCount() < 8) {
 			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE,sc2::GetRandomEntry(hatches)->pos, false)) {
 				std::cout << "---------------------build all extractors" << std::endl;
 				return;

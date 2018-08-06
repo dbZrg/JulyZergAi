@@ -20,6 +20,7 @@ public:
 	//!Supply cap with overlords already in production
 	float GetSupplyCap();
 	float GetSupplyOffset();
+	float GetMutaCount();
 	bool AlreadyTraining(const sc2::Units &units, sc2::ABILITY_ID ability);
 	size_t ProductionManager::AlreadyTrainingCount(const sc2::Units units, sc2::ABILITY_ID ability);
 };

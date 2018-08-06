@@ -140,12 +140,7 @@ void ZZerg::OnUnitCreated(const sc2::Unit * unit)
 	}
 	if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_MUTALISK)
 	{
-		if (army.muta_squad_1.size() < 10) {
 			army.muta_squad_1.push_back(unit);
-		}
-		else {
-			army.muta_squad_2.push_back(unit);
-		}
 	}
 }
 
@@ -165,9 +160,6 @@ void ZZerg::OnUnitDestroyed(const sc2::Unit * unit)
 		army.muta_squad_1.erase(std::remove_if(army.muta_squad_1.begin(), army.muta_squad_1.end(),
 			[&](const sc2::Unit * harass_unit) { return unit->tag == harass_unit->tag; }),
 			army.muta_squad_1.end());
-		army.muta_squad_2.erase(std::remove_if(army.muta_squad_2.begin(), army.muta_squad_2.end(),
-			[&](const sc2::Unit * harass_unit) { return unit->tag == harass_unit->tag; }),
-			army.muta_squad_2.end());
 	}
 
 	

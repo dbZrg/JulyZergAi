@@ -63,11 +63,7 @@ void ArmyManagment::MainArmyManager()
 	//
 	if (main_army==defend) {
 		//If 
-		for (auto & unit : zerglings) {
-			if (unit->orders.size() == 0 && sc2::Distance2D(unit->pos,bot.staging_location_)>20) {
-				bot.Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART, bot.staging_location_);
-			}
-		}
+		
 
 		//Defend when not attacking
 		auto enemy_clusters = sc2::search::Cluster(enemy_army, 8);
@@ -75,16 +71,21 @@ void ArmyManagment::MainArmyManager()
 		std::vector <std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_attack_clusters;
 		for (auto & e_cluster : enemy_clusters) {
 			const sc2::Unit * nearest_base = bot.EconomyManager().FindNearestBase(&e_cluster.second.front());
-			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 20) {
+			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 30) {
 				enemy_attack_clusters.push_back(e_cluster);
 			}
 		}
 		if (enemy_attack_clusters.size() > 0) we_are_under_attack = true;
 		else we_are_under_attack = false;
 
-		if (enemy_attack_clusters.size() > 0) {
-			if (enemy_attack_clusters.front().second.size() < zerglings.size()) {
+		for (auto & unit : zerglings) {
+			if (unit->orders.size() == 0 && sc2::Distance2D(unit->pos, bot.staging_location_)>10 && !we_are_under_attack) {
+				bot.Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART, bot.staging_location_);
+			}
+		}
 
+		if (enemy_attack_clusters.size() > 0) {
+			if (((bot.EnemyInfo().enemy_army_.size()*1.4 < zerglings.size()) && bot.EnemyInfo().enemy_army_.size()<20) || bot.EnemyInfo().enemy_army_.size()>=20 ) {
 				bot.Actions()->UnitCommand(zerglings, sc2::ABILITY_ID::ATTACK, enemy_attack_clusters.front().first);
 			}
 			else {
@@ -123,7 +124,7 @@ void ArmyManagment::MutaManager()
 	
 	sc2::Units anti_air_army = bot.Observation()->GetUnits(sc2::Unit::Alliance::Enemy, sc2::IsUnits({ sc2::UNIT_TYPEID::TERRAN_MARINE, sc2::UNIT_TYPEID::TERRAN_WIDOWMINE, sc2::UNIT_TYPEID::TERRAN_VIKINGFIGHTER, sc2::UNIT_TYPEID::TERRAN_THOR, sc2::UNIT_TYPEID::TERRAN_MISSILETURRET, sc2::UNIT_TYPEID::TERRAN_LIBERATOR }));
 	sc2::Units workers = bot.Observation()->GetUnits(sc2::Unit::Alliance::Enemy, sc2::IsUnits({ sc2::UNIT_TYPEID::TERRAN_SCV,sc2::UNIT_TYPEID::ZERG_DRONE,sc2::UNIT_TYPEID::PROTOSS_PROBE }));
-	auto enemy_clusters = sc2::search::Cluster(anti_air_army, 3);
+	auto enemy_clusters = sc2::search::Cluster(anti_air_army, 7);
 	sc2::Units workers_in_range_1;
 	sc2::Units workers_in_range_2;
 
@@ -145,123 +146,44 @@ void ArmyManagment::MutaManager()
 				workers_in_range_1.push_back(worker);
 			}
 		}
-		if (muta_squad_2.size() > 0) {
-			if (sc2::Distance2D(muta_squad_2[0]->pos, worker->pos) < 10) {
-				workers_in_range_2.push_back(worker);
+		if (!muta_squad_1_sent && muta_squad_1.size() > 14) {
+			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, attack_pos_1);
+			muta_squad_1_sent = true;
+		}
+
+		if (muta_squad_1.size() > 0) {
+			/*if (bot.frame % 100 == 0) {
+				auto muta_clusters = sc2::search::Cluster(muta_squad_1, 4);
+				for (auto & cluster : muta_clusters) {
+					for (auto & muta : cluster.second) {
+						bot.Actions()->UnitCommand(&muta, sc2::ABILITY_ID::SMART, cluster.first);
+					}
+				}
+			}*/
+
+			for (auto &muta : muta_squad_1) {
+				auto anti_air_1 = FindNearstEnemyCluster(muta, enemy_clusters);
+				bot.Debug()->DebugSphereOut(anti_air_1.first, 7, sc2::Colors::Red);
+				if (sc2::Distance2D(muta->pos, anti_air_1.first) < 12) {
+					sc2::Point3D retreat_point;
+					retreat_point.x = 2 * muta->pos.x - anti_air_1.first.x;
+					retreat_point.y = 2 * muta->pos.y - anti_air_1.first.y;
+					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, retreat_point);
+				}
+				else if (workers_in_range_1.size() > 0 && muta->orders.size() == 0) {
+					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, workers_in_range_1.front());
+					bot.Debug()->DebugSphereOut(workers_in_range_1.front()->pos, 3, sc2::Colors::White);
+
+				}
+				else if (muta_squad_1_sent && muta->orders.size() == 0) {
+					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, attack_pos_1);
+					sc2::Point3D attack_pos_1_debug(attack_pos_1.x, attack_pos_1.y, 2);
+					bot.Debug()->DebugSphereOut(attack_pos_1_debug, 3, sc2::Colors::White);
+
+				}
 			}
 		}
 	}
-	if (!muta_squad_1_sent && muta_squad_1.size()>9) {
-		bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, attack_pos_1);
-		muta_squad_1_sent = true;
-	}
-	if (!muta_squad_2_sent && muta_squad_2.size()>9) {
-		bot.Actions()->UnitCommand(muta_squad_2, sc2::ABILITY_ID::ATTACK, attack_pos_2);
-		muta_squad_2_sent = true;
-	}
-	if (muta_squad_1.size() > 0) {
-		auto anti_air_1 = FindNearstEnemyCluster(muta_squad_1[0], enemy_clusters);
-		bot.Debug()->DebugSphereOut(anti_air_1.first,4,sc2::Colors::Red);
-		if (bot.frame % 500 == 0) {
-			auto muta_clusters = sc2::search::Cluster(muta_squad_1, 100);
-			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, muta_clusters.front().first);
-		}
-
-		for (auto &muta : muta_squad_1) {
-			if (sc2::Distance2D(muta->pos, anti_air_1.first) < 10) {
-				sc2::Point3D retreat_point;
-				retreat_point.x = 2 * muta->pos.x - anti_air_1.first.x;
-				retreat_point.y = 2 * muta->pos.y - anti_air_1.first.y;
-				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, retreat_point);
-			}
-			else if (workers_in_range_1.size() > 0 && muta->orders.size() == 0) {
-				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, workers_in_range_1.front());
-				bot.Debug()->DebugSphereOut(workers_in_range_1.front()->pos, 3, sc2::Colors::White);
-
-			}
-			else if (muta_squad_1_sent && muta->orders.size()==0) {
-				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, attack_pos_1);
-				sc2::Point3D attack_pos_1_debug(attack_pos_1.x, attack_pos_1.y, 2);
-				i++;
-				if()
-				bot.Debug()->DebugSphereOut(attack_pos_1_debug, 3, sc2::Colors::White);
-
-			}
-		}
-
-
-	//	if (sc2::Distance2D(anti_air_1.first, muta_squad_1[0]->pos) < 12) {
-	//		if (anti_air_1.second.size() == 1) {
-	//			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, anti_air_1.first);
-	//			bot.Debug()->DebugSphereOut(anti_air_1.first, 3, sc2::Colors::White);
-	//		}
-	//		else {
-	//			for (auto &muta : muta_squad_1) {
-	//				if (sc2::Distance2D(muta->pos, anti_air_1.first) < 12) {
-	//					sc2::Point3D retreat_point;
-	//					retreat_point.x = 2 * muta->pos.x - anti_air_1.first.x;
-	//					retreat_point.y = 2 * muta->pos.y - anti_air_1.first.y;
-	//					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, retreat_point);
-	//				}
-	//			}
-	//		}
-	//		
-	//	}
-	//	else if (workers_in_range_1.size() > 0) {
-	//		bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, workers_in_range_1.front());
-	//		bot.Debug()->DebugSphereOut(workers_in_range_1.front()->pos, 3, sc2::Colors::White);
-
-	//	}
-	//	else if (muta_squad_1_sent) {
-	//		bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, attack_pos_1);
-	//		sc2::Point3D attack_pos_1_debug(attack_pos_1.x, attack_pos_1.y, 2);
-	//		bot.Debug()->DebugSphereOut(attack_pos_1_debug, 3, sc2::Colors::White);
-	//	}
-
-	//}
-	//if (muta_squad_2.size() > 0) {
-	//	auto anti_air_2 = FindNearstEnemyCluster(muta_squad_2[0], enemy_clusters);
-	//	if (sc2::Distance2D(anti_air_2.first, muta_squad_2[0]->pos) < 12) {
-	//		if (anti_air_2.second.size() == 1) {
-	//			bot.Actions()->UnitCommand(muta_squad_2, sc2::ABILITY_ID::ATTACK, anti_air_2.first);
-	//		}
-	//		
-	//		else {
-	//			for (auto &muta : muta_squad_2) {
-	//				if (sc2::Distance2D(muta->pos, anti_air_2.first) < 12) {
-	//					sc2::Point3D retreat_point;
-	//					retreat_point.x = 2 * muta->pos.x - anti_air_2.first.x;
-	//					retreat_point.y = 2 * muta->pos.y - anti_air_2.first.y;
-	//					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, retreat_point);
-	//				}
-	//			}
-	//		}
-	//	}
-	//	else if (workers_in_range_2.size() > 0) {
-	//		bot.Actions()->UnitCommand(muta_squad_2, sc2::ABILITY_ID::ATTACK, workers_in_range_2.front());
-	//	}
-	//	else if(muta_squad_2_sent) {
-	//		bot.Actions()->UnitCommand(muta_squad_2, sc2::ABILITY_ID::ATTACK,attack_pos_2);
-	//	}
-	}
-	
-	
-	
-	
-
-	/*for (auto &muta : muta_squad_1) {
-		if (sc2::Distance2D(muta->pos, muta_squad_1[0]->pos) > 5 && muta->orders.size() == 0) {
-			bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, muta_squad_1[0]);
-		}
-
-	}
-
-	for (auto &muta : muta_squad_2) {
-		if (sc2::Distance2D(muta->pos, muta_squad_2[0]->pos) > 5 && muta->orders.size() == 0) {
-			bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, muta_squad_2[0]);
-		}
-
-	}*/
 	
 	bot.Debug()->SendDebug();
 }
@@ -392,7 +314,7 @@ void ArmyManagment::ScoutManager()
 			continue; 
 		}
 		if (ovi_loc.first != nullptr) {
-			if (ovi_loc.first->orders.size() == 0 && sc2::Distance2D(ovi_loc.first->pos, ovi_loc.second) > 50 ) {
+			if (ovi_loc.first->orders.size() == 0 && sc2::Distance2D(ovi_loc.first->pos, ovi_loc.second) > 30 ) {
 				bot.Actions()->UnitCommand(ovi_loc.first, sc2::ABILITY_ID::SMART, ovi_loc.second);
 				i++;
 				continue;
@@ -400,7 +322,7 @@ void ArmyManagment::ScoutManager()
 
 			const sc2::Unit *nearest_enemy = FindNearestEnemy(ovi_loc.first);
 			if (nearest_enemy == nullptr ||  !IsArmy(nearest_enemy)) continue;
-			if (sc2::Distance2D(ovi_loc.first->pos, nearest_enemy->pos) < 15) {
+			if (sc2::Distance2D(ovi_loc.first->pos, nearest_enemy->pos) < 11) {
 				sc2::Point2D retreat_point;
 				retreat_point.x = 2 * ovi_loc.first->pos.x - nearest_enemy->pos.x;
 				retreat_point.y = 2 * ovi_loc.first->pos.y - nearest_enemy->pos.y;
@@ -415,7 +337,7 @@ void ArmyManagment::ScoutManager()
 void ArmyManagment::MorphUnits()
 {
 	sc2::Units banes = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELING));
-	sc2::Units zerglings = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_ZERGLING , sc2::UNIT_TYPEID::ZERG_BANELING }));
+	sc2::Units zerglings = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_ZERGLING , sc2::UNIT_TYPEID::ZERG_BANELING, sc2::UNIT_TYPEID::ZERG_BANELINGCOCOON }));
 	if (banes.size() < zerglings.size() / 2) {
 		bot.Actions()->UnitCommand(sc2::GetRandomEntry(zerglings), sc2::ABILITY_ID::TRAIN_BANELING);
 	}

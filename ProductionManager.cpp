@@ -104,11 +104,11 @@ void ProductionManager::ArmyProduction(const sc2::Unit *larva)
 	int32_t mineral_count = bot.Observation()->GetMinerals();
 	int32_t gas_count = bot.Observation()->GetVespene();
 
-	if (mineral_count > 99 && gas_count > 99  && spire.size() > 0 && bot.Observation()->GetFoodUsed()<200 && mutalisk.size() < 20 ) {
+	if (mineral_count > 99 && gas_count > 99  && spire.size() > 0 && bot.Observation()->GetFoodUsed()<200 && GetMutaCount() < 15 ) {
 		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_MUTALISK);
 		return;
 	}
-	if ( mineral_count > 99 && spawning_pool.size() > 0 && bot.Observation()->GetFoodUsed()<160) {
+	if ( mineral_count > 99 && spawning_pool.size() > 0 ) {
 		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_ZERGLING);
 		return;
 	}
@@ -123,7 +123,7 @@ ProductionState ProductionManager::GetProductionState()
 	int32_t my_supp = bot.Observation()->GetFoodUsed();
 
 
-	if (enemy_army_supp > my_army_supp*1.5 ||
+	if (enemy_army_supp > my_army_supp*1.2 ||
 		bot.ArmyManagment().we_are_under_attack ||
 		workers_count > 76 ||
 		my_supp > 38 && my_army_supp <15
@@ -153,6 +153,13 @@ float ProductionManager::GetSupplyOffset()
 		supply_offset = 5;
 	}
 	return bot.Observation()->GetFoodUsed() + supply_offset;
+}
+
+float ProductionManager::GetMutaCount()
+{
+	sc2::Units eggs = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EGG));
+	sc2::Units mutas = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_MUTALISK));
+	return mutas.size()+ (AlreadyTrainingCount(eggs, sc2::ABILITY_ID::TRAIN_MUTALISK));
 }
 
 bool ProductionManager::AlreadyTraining(const sc2::Units &units, sc2::ABILITY_ID ability)

@@ -121,7 +121,7 @@ float EnemyInfo::StaticDefCount(sc2::Unit & unit)
 
 float EnemyInfo::GetEnemySupply()
 {
-	
+	return 0;
 }
 
 float EnemyInfo::GetEnemyArmySupp()const

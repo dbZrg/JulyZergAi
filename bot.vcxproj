@@ -161,6 +161,7 @@
     </ClInclude>
     <ClInclude Include="EconomyManager.h" />
     <ClInclude Include="EnemyInfo.h" />
+    <ClInclude Include="LadderInterface.h" />
     <ClInclude Include="ProductionManager.h" />
     <ClInclude Include="Utility.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
