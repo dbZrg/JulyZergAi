@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 	ZZerg bot;
 	coordinator.SetParticipants({
 		CreateParticipant(sc2::Race::Zerg, &bot),
-		CreateComputer(sc2::Race::Terran,sc2::Difficulty::HardVeryHard)
+		CreateComputer(sc2::Race::Terran,sc2::Difficulty::CheatInsane)
 		});
 	coordinator.SetMultithreaded(true);
 	coordinator.SetStepSize(1);

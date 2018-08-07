@@ -125,7 +125,7 @@ ProductionState ProductionManager::GetProductionState()
 
 	if (enemy_army_supp > my_army_supp*1.2 ||
 		bot.ArmyManagment().we_are_under_attack ||
-		workers_count > 76 ||
+		workers_count > 78 ||
 		my_supp > 38 && my_army_supp <15
 		) 
 	{
@@ -146,7 +146,10 @@ float ProductionManager::GetSupplyCap()
 float ProductionManager::GetSupplyOffset()
 {
 	float supply_offset;
-	if (bot.Observation()->GetFoodUsed() > 35) {
+	if (bot.Observation()->GetFoodUsed() > 100) {
+		supply_offset = 26;
+	}
+	else if (bot.Observation()->GetFoodUsed() > 35) {
 		supply_offset = 13;
 	}
 	else {

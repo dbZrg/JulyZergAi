@@ -23,6 +23,10 @@ public:
 	
 	enum army_state { defend, attack, harass };
 	army_state main_army;
+
+	sc2::Point2D GetAroundPoint(sc2::Point2D enemy_pos, sc2::Point2D unit_pos, sc2::Point2D end_pos);
+	sc2::Point2D GetRetreatPoing(sc2::Point2D enemy_pos, sc2::Point2D unit_pos);
+
 	float GetClusterValue(sc2::Point3D cluster_pos, std::vector<sc2::Unit> &units);
 
 	//! return nearest enemy unit to *unit
@@ -33,6 +37,8 @@ public:
 	const sc2::Unit * FindLowHpQueenInRad(const sc2::Unit* unit,float radius);
 	//! return nearest enemy base from bot starting location
 	const sc2::Unit * FindNearestEnemyBase();
+
+	const sc2::Unit * FindNearestEnemyUnit(const sc2::Unit* unit,sc2::UNIT_TYPEID unit_type);
 
 	std::pair<sc2::Point3D, std::vector<sc2::Unit>> FindNearstEnemyCluster(const sc2::Unit *unit, std::vector<std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_clusters);
 
@@ -49,14 +55,15 @@ public:
 	sc2::Units													harass_squad_2;
 	sc2::Units													muta_squad_1;
 	sc2::Units													muta_squad_2;
-
+	sc2::Units													mutas;
+	const sc2::Unit *target;
 	const sc2::Unit *scout;
 	bool attack_sent;
 	int scout_pos_index;
 	bool squad_assigned;
 	bool we_are_under_attack;
-	bool muta_squad_1_sent;
-	bool muta_squad_2_sent;
+
+	sc2::Point2D muta_attack_pos;
 	
 };
 
