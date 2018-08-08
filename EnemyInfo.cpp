@@ -133,3 +133,20 @@ float EnemyInfo::GetEnemyArmySupp()const
 	}
 	return supply;
 }
+
+float EnemyInfo::GetEnemyAirCount() const
+{
+	float count=0;
+	for (auto& unit : enemy_army_) {
+		if (unit.unit_type.ToType() == sc2::UNIT_TYPEID::TERRAN_BANSHEE ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::PROTOSS_ORACLE ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::TERRAN_BATTLECRUISER ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::PROTOSS_CARRIER ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::PROTOSS_PHOENIX ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::TERRAN_LIBERATOR ||
+			unit.unit_type.ToType() == sc2::UNIT_TYPEID::PROTOSS_TEMPEST ) {
+			count++;
+		}
+	}
+	return count;
+}

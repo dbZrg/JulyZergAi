@@ -17,6 +17,9 @@ ProductionManager::~ProductionManager()
 
 void ProductionManager::All()
 {
+	bot.DebugTextOnScreen("SAve Minerals:", std::to_string(bot.BuildingManager().save_minerals));
+	if (bot.BuildingManager().save_minerals) return;
+	
 	sc2::Units larve = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_LARVA));
 	if (larve.size() == 0) return;
 
@@ -32,7 +35,7 @@ void ProductionManager::All()
 	
 
 
-
+	
 }
 
 void ProductionManager::QueenProduction()
@@ -100,7 +103,6 @@ void ProductionManager::ArmyProduction(const sc2::Unit *larva)
 {
 	const sc2::Units spawning_pool = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPAWNINGPOOL));
 	const sc2::Units spire = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
-	const sc2::Units mutalisk = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
 	int32_t mineral_count = bot.Observation()->GetMinerals();
 	int32_t gas_count = bot.Observation()->GetVespene();
 
@@ -108,7 +110,8 @@ void ProductionManager::ArmyProduction(const sc2::Unit *larva)
 		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_MUTALISK);
 		return;
 	}
-	if ( mineral_count > 99 && spawning_pool.size() > 0 ) {
+	if (GetMutaCount() < 15 && gas_count > 99 && spire.size() > 0) return;
+	if ( mineral_count > 99 && spawning_pool.size() > 0) {
 		bot.Actions()->UnitCommand(larva, sc2::ABILITY_ID::TRAIN_ZERGLING);
 		return;
 	}
@@ -123,7 +126,7 @@ ProductionState ProductionManager::GetProductionState()
 	int32_t my_supp = bot.Observation()->GetFoodUsed();
 
 
-	if (enemy_army_supp > my_army_supp*1.2 ||
+	if (enemy_army_supp > my_army_supp*1.5 ||
 		bot.ArmyManagment().we_are_under_attack ||
 		workers_count > 78 ||
 		my_supp > 38 && my_army_supp <15
@@ -147,7 +150,7 @@ float ProductionManager::GetSupplyOffset()
 {
 	float supply_offset;
 	if (bot.Observation()->GetFoodUsed() > 100) {
-		supply_offset = 26;
+		supply_offset = 31;
 	}
 	else if (bot.Observation()->GetFoodUsed() > 35) {
 		supply_offset = 13;

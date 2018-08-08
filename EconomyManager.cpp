@@ -426,6 +426,7 @@ void EconomyManager::UpgradesManager()
 	sc2::Units pools = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPAWNINGPOOL));
 	sc2::Units bane_nest = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELINGNEST));
 	sc2::Units lair = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_LAIR));
+	sc2::Units spire = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
 	
 	if (bot.Observation()->GetMinerals() > 150 && bot.Observation()->GetVespene() > 150 && bot.pool) {
 		bot.Actions()->UnitCommand(pools.front(), sc2::ABILITY_ID::RESEARCH_ZERGLINGMETABOLICBOOST);
@@ -436,6 +437,10 @@ void EconomyManager::UpgradesManager()
 	if (bot.Observation()->GetMinerals() > 150 && bot.Observation()->GetVespene() > 150 && bot.pool ) {
 		bot.Actions()->UnitCommand(bot.main_base, sc2::ABILITY_ID::MORPH_LAIR);
 	}
+	if (bot.Observation()->GetMinerals() > 100 && bot.Observation()->GetVespene() > 100 && bot.pool && spire.size()>0 && spire.front()->orders.size() == 0) {
+		bot.Actions()->UnitCommand(spire, sc2::ABILITY_ID::RESEARCH_ZERGFLYERATTACKLEVEL1);
+	}
+	
 }
 
 
@@ -593,6 +598,17 @@ bool EconomyManager::InRangeOfTumor(sc2::Point2D point)
 	return false;
 }
 
+float EconomyManager::GetFinishedBasesCount() const
+{
+	auto bases = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_HATCHERY,sc2::UNIT_TYPEID::ZERG_LAIR, sc2::UNIT_TYPEID::ZERG_HIVE }));
+	float count = 0;
+	for (auto & base : bases) {
+		if (base->build_progress < 1 && base->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_HATCHERY) continue;
+		count++;
+	}
+	return count;
+}
+
 float EconomyManager::GetWorkerCount() const
 {
 	sc2::Units workers = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_DRONE));
@@ -608,10 +624,11 @@ float EconomyManager::GetActiveGasCount() const
 	int count = 0;
 	sc2::Units extractors = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EXTRACTOR));
 	for (auto & unit : extractors) {
-		if (unit->vespene_contents > 0) count++;
+		if (unit->vespene_contents > 0 || unit->build_progress < 1) count++;
 	}
 	return count;
 }
+
 
 bool EconomyManager::UnitIsInRadius(const sc2::Unit * unit, const sc2::Unit * unit2)
 {

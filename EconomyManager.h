@@ -32,6 +32,7 @@ class EconomyManager
 	const sc2::Unit * FindNonOptimalMiningLoc();
 	bool InRangeOfTumor(sc2::Point2D point);
 
+	float GetFinishedBasesCount() const;
 	float GetWorkerCount() const;
 	float GetActiveGasCount() const;
 	bool UnitIsInRadius(const sc2::Unit* unit, const sc2::Unit* unit2);

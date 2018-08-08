@@ -30,6 +30,6 @@ public:
 
 	float GetEnemySupply();
 	float GetEnemyArmySupp() const;
-	sc2::Point2D GetPlaceToAttack();
+	float GetEnemyAirCount() const;
 };
 

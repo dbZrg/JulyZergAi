@@ -28,10 +28,38 @@ void BuildingManager::BuildingManagerStep()
 	sc2::Units extractors = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EXTRACTOR));
 	sc2::Units baneling_nests = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELINGNEST));
 	int active_gas_count = bot.EconomyManager().GetActiveGasCount();
+	float finished_bases_count = bot.EconomyManager().GetFinishedBasesCount();
 
 	//Build Order
 
 	//Fast expand
+	if (bot.frame % 100 == 0) {
+		if (bot.EnemyInfo().GetEnemyAirCount() == 0) {
+
+		}
+		else if (bot.EnemyInfo().GetEnemyAirCount() == 1) {
+			//check if all bases have at least one spore
+			for (auto & base : hatches) {
+				size_t spine_count = GetStaticDefCount(base).first;
+				if (spine_count < 1) { TryBuildSpore(base); }
+			}
+		}
+		else if (bot.EnemyInfo().GetEnemyAirCount() < 4) {
+			//check if all bases have at least
+			for (auto & base : hatches) {
+				size_t spine_count = GetStaticDefCount(base).first;
+				if (spine_count < 2) { TryBuildSpore(base); }
+			}
+		}
+		else if (bot.EnemyInfo().GetEnemyAirCount() < 10) {
+			//check if all bases have at least 
+			for (auto & base : hatches) {
+				size_t spine_count = GetStaticDefCount(base).first;
+				if (spine_count < 4) { TryBuildSpore(base); }
+			}
+		}
+	}
+
 	if (!OrderInProgress(sc2::ABILITY_ID::BUILD_HATCHERY) && hatches.size() == 1) {
 		if (!TryExpand(sc2::ABILITY_ID::BUILD_HATCHERY, sc2::UNIT_TYPEID::ZERG_DRONE) || bot.Observation()->GetMinerals() < 300) {
 			std::cout << "------------------------ first base" << std::endl;
@@ -56,11 +84,19 @@ void BuildingManager::BuildingManagerStep()
 				return;
 			}
 		}
-		if (lair.size() > 0 && extractors.size()  < hatches.size() * 2  && bot.EconomyManager().GetActiveGasCount() < 8) {
-			if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE,sc2::GetRandomEntry(hatches)->pos, false)) {
+		if (lair.size() > 0 && extractors.size()  < finished_bases_count * 2  && active_gas_count + OrderCount(sc2::ABILITY_ID::BUILD_EXTRACTOR) < 8) {
+			for (auto &base : hatches) {
+				if (base->build_progress == 1 && TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE, base->pos, false)) {
+					return;
+				}
+			}
+			
+			
+		/*	if (!TryBuildGas(sc2::ABILITY_ID::BUILD_EXTRACTOR, sc2::UNIT_TYPEID::ZERG_DRONE,sc2::GetRandomEntry(hatches)->pos, false)) {
 				std::cout << "---------------------build all extractors" << std::endl;
 				return;
-			}
+			}*/
+
 		}
 
 		/*if ((!OrderInProgress(sc2::ABILITY_ID::BUILD_EXTRACTOR) && extractors.size() == 2 && hatches.size()==4) || (!OrderInProgress(sc2::ABILITY_ID::BUILD_EXTRACTOR) && hatches.size() == 4 && extractors.size() == 3) || (active_gas_count < hatches.size() && !OrderInProgress(sc2::ABILITY_ID::BUILD_EXTRACTOR) && hatches.size()>2)) {
@@ -77,24 +113,32 @@ void BuildingManager::BuildingManagerStep()
 				return; //dovrsiiii
 			}
 		}
-		if (current_supply > 32 && drones.size() > 22 && hatches.size() < 3) {   //need better solution
-			if (bot.Observation()->GetMinerals() < 299 || !TryExpand(sc2::ABILITY_ID::BUILD_HATCHERY, sc2::UNIT_TYPEID::ZERG_DRONE)) {
+		if (current_supply > 32 && drones.size() > 22 && hatches.size()+ OrderCount(sc2::ABILITY_ID::BUILD_HATCHERY) < 3) {   //need better solution
+			if (bot.Observation()->GetMinerals() < 300) save_minerals = true;
+			else save_minerals = false;
+			if (bot.Observation()->GetMinerals() < 300 || !TryExpand(sc2::ABILITY_ID::BUILD_HATCHERY, sc2::UNIT_TYPEID::ZERG_DRONE)) {
 				std::cout << "----------------------third baseee" << std::endl;
 				return;
 			}
 		}
-		if (current_supply > 40 && hatches.size() > 2 && lair.size() > 0 && spire.size()==0) {
+		
+		if (current_supply > 40 && hatches.size() > 2 && lair.size() > 0 && spire.size()+ OrderCount(sc2::ABILITY_ID::BUILD_SPIRE)==0) {
+			if (bot.Observation()->GetMinerals() < 200) save_minerals = true;
+			else save_minerals = false;
 			if (bot.Observation()->GetMinerals() < 200 || bot.Observation()->GetVespene() < 200 || !TryBuildSpire()) {
 				std::cout << "-----------------------spireeee" << std::endl;
 				return;
 			}
 		}
 		
-		if ((drones.size() > bot.GetCurrnetWorkerLimit(true) + 10 && bot.Observation()->GetMinerals() > 299) || (bot.Observation()->GetMinerals() > 1000 && hatches.size() < 8) || (current_supply > 65 && current_supply < 76)) {
-			TryExpand(sc2::ABILITY_ID::BUILD_HATCHERY, sc2::UNIT_TYPEID::ZERG_DRONE);
+		if ((drones.size() > bot.GetCurrnetWorkerLimit(true) + 10 ) || (bot.Observation()->GetMinerals() > 2000 && hatches.size() < 8) || (current_supply > 70 && hatches.size() + OrderCount(sc2::ABILITY_ID::BUILD_HATCHERY) < 4) || (current_supply > 130 && hatches.size() + OrderCount(sc2::ABILITY_ID::BUILD_HATCHERY) < 5)) {
+			if (bot.Observation()->GetMinerals() < 300) save_minerals = true;
+			else save_minerals = false;
+			if(bot.Observation()->GetMinerals() < 300 || !TryExpand(sc2::ABILITY_ID::BUILD_HATCHERY, sc2::UNIT_TYPEID::ZERG_DRONE));
 			std::cout << "--------------------------expand if ...." << std::endl;
 			return;
 		}
+		
 		
 	}
 
@@ -250,8 +294,7 @@ bool BuildingManager::TryBuildSpawningPool()
 	debug.x = pool_place.x;
 	debug.y = pool_place.y;
 	debug.z = bot.startLocation_.z;
-	bot.Debug()->DebugSphereOut( debug,3,sc2::Colors::Red);
-	bot.Debug()->SendDebug();
+
 	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPAWNINGPOOL, sc2::UNIT_TYPEID::ZERG_DRONE, pool_place,true);
 }
 
@@ -270,8 +313,7 @@ bool BuildingManager::TryBuildBaneling()
 	debug.z = bot.startLocation_.z;
 	pool_place.x += sc2::GetRandomInteger(-4, 4);
 	pool_place.y += sc2::GetRandomInteger(-4, 4);
-	bot.Debug()->DebugSphereOut(debug, 3, sc2::Colors::Red);
-	bot.Debug()->SendDebug();
+	
 	return TryBuildStructure(sc2::ABILITY_ID::BUILD_BANELINGNEST, sc2::UNIT_TYPEID::ZERG_DRONE, pool_place, true);
 }
 
@@ -290,9 +332,18 @@ bool BuildingManager::TryBuildSpire()
 	debug.z = bot.startLocation_.z;
 	pool_place.x += sc2::GetRandomInteger(-4, 4);
 	pool_place.y += sc2::GetRandomInteger(-4, 4);
-	bot.Debug()->DebugSphereOut(debug, 3, sc2::Colors::Red);
-	bot.Debug()->SendDebug();
+
 	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPIRE, sc2::UNIT_TYPEID::ZERG_DRONE, pool_place, true);
+}
+
+bool BuildingManager::TryBuildSpore(const sc2::Unit *base)
+{
+	const float pi = 3.14;
+	std::vector<sc2::Point2D> spore_locs;
+	for (float z = 0, x = 0; z < 4; z++, x = x + pi / 2) {
+		spore_locs.push_back(sc2::Point2D(base->pos.x + (3 * cos(x)), base->pos.y + (3 * sin(x))));
+	}
+	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPORECRAWLER, sc2::UNIT_TYPEID::ZERG_DRONE, sc2::GetRandomEntry(spore_locs), true);
 }
 
 bool BuildingManager::OrderInProgress(sc2::AbilityID ability_id)
@@ -308,4 +359,31 @@ bool BuildingManager::OrderInProgress(sc2::AbilityID ability_id)
 		}
 	}
 	return false;
+}
+
+size_t BuildingManager::OrderCount(sc2::AbilityID ability_id)
+{
+	auto workers = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_DRONE));
+	size_t count = 0;
+	for (auto & drone : workers) {
+		if (drone->orders.size() > 0) {
+			if (drone->orders.front().ability_id == ability_id) {
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
+std::pair<size_t, size_t> BuildingManager::GetStaticDefCount(const sc2::Unit * unit)
+{
+	std::pair<size_t, size_t> spore_spine(0, 0);
+	sc2::Units static_def = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_SPORECRAWLER,sc2::UNIT_TYPEID::ZERG_SPINECRAWLER }));
+	for (auto &def_unit : static_def) {
+		if (sc2::Distance2D(def_unit->pos, unit->pos) < 6) {
+			if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_SPORECRAWLER) spore_spine.first++;
+			else if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_SPINECRAWLER) spore_spine.second++;
+		}
+	}
+	return spore_spine;
 }

@@ -17,7 +17,13 @@ public:
 	bool TryBuildSpawningPool();
 	bool TryBuildBaneling();
 	bool TryBuildSpire();
+	bool TryBuildSpore(const sc2::Unit *base);
 
-	bool OrderInProgress( sc2::AbilityID ability_id);  // add argument (Unit*), make it general
+	bool OrderInProgress( sc2::AbilityID ability_id);  
+	size_t OrderCount(sc2::AbilityID ability_id);
+
+	std::pair<size_t,size_t> GetStaticDefCount(const sc2::Unit *unit);
+
+	bool save_minerals;
 };
 
