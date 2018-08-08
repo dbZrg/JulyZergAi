@@ -34,6 +34,29 @@ void ArmyManagment::init()
 	scout_pos_index=0;
 	squad_assigned = false;
 	target = nullptr;
+	sc2::Point2D top_right = bot.Observation()->GetGameInfo().playable_max;
+	sc2::Point2D bottom_left = bot.Observation()->GetGameInfo().playable_min;
+	sc2::Point2D top_left(bottom_left.x, top_right.y);
+	sc2::Point2D bottom_right(top_right.x, bottom_left.y);
+	std::vector<sc2::Point2D> corners = { top_left,top_left,bottom_left,bottom_right };
+	
+	float distance = std::numeric_limits<float>::max();
+	for (auto & corner : corners) {
+		float d = sc2::DistanceSquared2D(bot.enemy_location_, corner);
+		if (d < distance) {
+			distance = d;
+			enemy_corner = corner;
+		}
+	}
+	distance = std::numeric_limits<float>::max();
+	for (auto & corner : corners) {
+		float d = sc2::DistanceSquared2D(enemy_corner, corner);
+		if (d < distance && d > 5) {
+			distance = d;
+			escape_corner = corner;
+		}
+	}
+	mutas_in_corner = false;
 
 }
 
@@ -146,6 +169,7 @@ void ArmyManagment::MutaManager()
 		const sc2::Unit * muta_leader = muta_squad_1.front();
 
 		for (auto & muta : mutas) {
+			auto closest_worker = FindNearestEnemyUnit(muta, sc2::UNIT_TYPEID::TERRAN_SCV);
 			auto anti_air = FindNearstEnemyCluster(muta, enemy_clusters);
 			if (sc2::Distance2D(muta->pos, muta_leader->pos) < 6) {
 				muta_squad_1.push_back(muta);
@@ -153,14 +177,14 @@ void ArmyManagment::MutaManager()
 					[&](const sc2::Unit * muta_) { return muta->tag == muta_->tag; }),
 					mutas.end());
 			}
-			else if(sc2::Distance2D(anti_air.first,muta->pos)<15){
+			else if(sc2::Distance2D(anti_air.first,muta->pos)<16){
 				sc2::Point2D around_point= GetAroundPoint(anti_air.first, muta->pos, muta_leader->pos);
 				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, GetRetreatPoing(anti_air.first, muta->pos));
-
-			
-				
 			}
-			else if(sc2::Distance2D(anti_air.first, muta->pos)>19)  {
+			else if(closest_worker && sc2::Distance2D(closest_worker->pos,muta->pos)<9)  {
+				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, closest_worker);
+			}
+			else{ 
 				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, muta_leader);
 			}
 		}
@@ -177,39 +201,44 @@ void ArmyManagment::MutaManager()
 		}
 		bot.Debug()->SendDebug();
 		
-		if (sc2::Distance2D(anti_air_2.first,muta_cluster.first) < 11) {
-			if ((anti_air_2.second.size() < 6 && muta_squad_1.size() > 13) || (anti_air_2.second.size() < 3 && muta_squad_1.size() > 9) || (anti_air_2.second.size() < 2 && muta_squad_1.size() > 6)) {
-				const sc2::Unit * unit = bot.Observation()->GetUnit(anti_air_2.second.front().tag);
-				bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, unit );
-			}
-			else {
-				if (sc2::Distance2D(anti_air_2.first, bot.staging_location_)+5 < sc2::Distance2D(muta_cluster.first, bot.staging_location_)) {
-					bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, GetAroundPoint(anti_air_2.first, muta_cluster.first, bot.staging_location_));
+		
+		if (sc2::Distance2D(muta_cluster.first, enemy_corner) < 2 && !mutas_in_corner) { mutas_in_corner = true; }
+		else if (sc2::Distance2D(muta_cluster.first, enemy_corner) > 40) { mutas_in_corner = false; }
+
+		if (mutas_in_corner) {
+			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, escape_corner);
+		}
+
+		else {
+			if (sc2::Distance2D(anti_air_2.first, muta_cluster.first) < 13) {
+				if ((anti_air_2.second.size() < 6 && muta_squad_1.size() > 13) || (anti_air_2.second.size() < 3 && muta_squad_1.size() > 9) || (anti_air_2.second.size() < 2 && muta_squad_1.size() > 6)) {
+					const sc2::Unit * unit = bot.Observation()->GetUnit(anti_air_2.second.front().tag);
+					bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, unit);
 				}
 				else {
-					bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, GetRetreatPoing(anti_air_2.first, muta_cluster.first));
+						bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, GetRetreatPoing(anti_air_2.first, muta_cluster.first));
 				}
 			}
-		}
-		else if (closest_worker ) {
-			if (sc2::Distance2D(closest_worker->pos, muta_cluster.first) < 10) {
-				bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK,closest_worker);
+			else if (closest_worker) {
+				if (sc2::Distance2D(closest_worker->pos, muta_cluster.first) < 10) {
+					bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, closest_worker);
+				}
 			}
-		}
 
 
-		if (muta_leader->orders.size() == 0 && muta_squad_1.size() > 4) {
-			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.back().pos);
-		}
-		else if (muta_leader->orders.size() == 0 && muta_squad_1.size() < 5) {
-			bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, bot.startLocation_);
-		}
-		
-		
+			if (muta_leader->orders.size() == 0 && muta_squad_1.size() > 4) {
+				bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.back().pos);
+			}
+			else if (muta_leader->orders.size() == 0 && muta_squad_1.size() < 5) {
+				bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::SMART, bot.startLocation_);
+			}
 
-		for (auto &attack_muta : muta_squad_1) {
-			if (sc2::Distance2D(attack_muta->pos,muta_leader->pos) > 4) {
-				bot.Actions()->UnitCommand(attack_muta, sc2::ABILITY_ID::SMART, muta_leader);
+
+
+			for (auto &attack_muta : muta_squad_1) {
+				if (sc2::Distance2D(attack_muta->pos, muta_leader->pos) > 4) {
+					bot.Actions()->UnitCommand(attack_muta, sc2::ABILITY_ID::SMART, muta_leader);
+				}
 			}
 		}
 	}

@@ -62,8 +62,11 @@ public:
 	int scout_pos_index;
 	bool squad_assigned;
 	bool we_are_under_attack;
-
+	bool mutas_in_corner;
+	sc2::Point2D escape_corner;
+	sc2::Point2D enemy_corner;
 	sc2::Point2D muta_attack_pos;
+	
 	
 };
 
