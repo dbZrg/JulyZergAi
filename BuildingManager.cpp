@@ -30,6 +30,7 @@ void BuildingManager::BuildingManagerStep()
 	int active_gas_count = bot.EconomyManager().GetActiveGasCount();
 	float finished_bases_count = bot.EconomyManager().GetFinishedBasesCount();
 
+	if (bot.Observation()->GetMinerals() > 300) save_minerals = false;
 	//Build Order
 
 	//Fast expand
@@ -122,7 +123,7 @@ void BuildingManager::BuildingManagerStep()
 			}
 		}
 		
-		if (current_supply > 40 && hatches.size() > 2 && lair.size() > 0 && spire.size()+ OrderCount(sc2::ABILITY_ID::BUILD_SPIRE)==0) {
+		if (current_supply > 60 && hatches.size() > 2 && lair.size() > 0 && spire.size()+ OrderCount(sc2::ABILITY_ID::BUILD_SPIRE)==0) {
 			if (bot.Observation()->GetMinerals() < 200) save_minerals = true;
 			else save_minerals = false;
 			if (bot.Observation()->GetMinerals() < 200 || bot.Observation()->GetVespene() < 200 || !TryBuildSpire()) {
