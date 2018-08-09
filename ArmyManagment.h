@@ -19,7 +19,7 @@ public:
 	void HarassManager();
 	void ScoutManager();
 	void MorphUnits(); // move to production
-	void ClusterTest();
+
 	
 	enum army_state { defend, attack, harass };
 	army_state main_army;
@@ -27,7 +27,7 @@ public:
 	sc2::Point2D GetAroundPoint(sc2::Point2D enemy_pos, sc2::Point2D unit_pos, sc2::Point2D end_pos);
 	sc2::Point2D GetRetreatPoing(sc2::Point2D enemy_pos, sc2::Point2D unit_pos);
 
-	float GetClusterValue(sc2::Point3D cluster_pos, std::vector<sc2::Unit> &units);
+
 
 	//! return nearest enemy unit to *unit
 	const sc2::Unit * FindNearestEnemy(const sc2::Unit* unit);
@@ -41,12 +41,12 @@ public:
 	const sc2::Unit * FindNearestEnemyUnit(const sc2::Unit* unit,sc2::UNIT_TYPEID unit_type);
 
 	std::pair<sc2::Point3D, std::vector<sc2::Unit>> FindNearstEnemyCluster(const sc2::Unit *unit, std::vector<std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_clusters);
-
-
+	
 	bool IsStructure(const sc2::Unit *unit)const;
 	bool IsArmy(const sc2::Unit *unit)const;
 	bool UnitsGrouped(std::vector<const sc2::Unit *> &units, float radius);
 	bool GroupUnits(std::vector<const sc2::Unit *> &units, float radius);
+
 	std::vector <const sc2::Unit*>								defense_queens_;
 	std::vector<std::pair<const sc2::Unit*, sc2::Point3D>>		ovi_scout_loc_;
 	std::vector<sc2::Point2D>									inital_scout_pos_;
@@ -54,10 +54,10 @@ public:
 	sc2::Units													harass_squad_1;
 	sc2::Units													harass_squad_2;
 	sc2::Units													muta_squad_1;
-	sc2::Units													muta_squad_2;
 	sc2::Units													mutas;
-	const sc2::Unit *target;
-	const sc2::Unit *scout;
+	
+	const sc2::Unit*											target;
+	const sc2::Unit*											scout;
 	bool attack_sent;
 	int scout_pos_index;
 	bool squad_assigned;

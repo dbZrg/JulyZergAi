@@ -31,7 +31,8 @@ void ArmyManagment::init()
 	}
 	//send scout to enemy base
 	bot.Actions()->UnitCommand(scout, sc2::ABILITY_ID::SMART, inital_scout_pos_[1]);
-	scout_pos_index=0;
+
+	scout_pos_index = 0;
 	squad_assigned = false;
 	target = nullptr;
 	sc2::Point2D top_right = bot.Observation()->GetGameInfo().playable_max;
@@ -65,7 +66,6 @@ void ArmyManagment::ArmyManagmentAll()
 	
 	MainArmyManager();
 	MutaManager();
-	
 	QueenDefenceManager();
 	//HarassManager();
 	MorphUnits();
@@ -76,27 +76,22 @@ void ArmyManagment::ArmyManagmentAll()
 void ArmyManagment::MainArmyManager()
 {
 	sc2::Units zerglings = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_ZERGLING , sc2::UNIT_TYPEID::ZERG_BANELING }));
-	sc2::Units bane_nest = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELINGNEST));
-	sc2::Units banes = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELING));
+	//! todo : Add units for other races
 	sc2::Units enemy_army = bot.Observation()->GetUnits(sc2::Unit::Alliance::Enemy, sc2::IsUnits({ sc2::UNIT_TYPEID::TERRAN_MARAUDER , sc2::UNIT_TYPEID::TERRAN_MARAUDER,sc2::UNIT_TYPEID::TERRAN_SIEGETANK,sc2::UNIT_TYPEID::TERRAN_SIEGETANKSIEGED,sc2::UNIT_TYPEID::TERRAN_MEDIVAC,sc2::UNIT_TYPEID::TERRAN_WIDOWMINE,sc2::UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED }));
-	sc2::Units enemy_bases = bot.Observation()->GetUnits(sc2::Unit::Alliance::Enemy, sc2::IsUnits({ sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER,sc2::UNIT_TYPEID::TERRAN_COMMANDCENTER }));
 	
+	//! todo : better rules when to attack
 	/*if ((bot.EnemyInfo().GetEnemyArmySupp() * 1.8 < bot.Observation()->GetFoodArmy() && bot.EnemyInfo().GetEnemyArmySupp() > 20) || bot.Observation()->GetFoodUsed()>190) main_army = attack;
 	else main_army = defend;*/
 	if (bot.Observation()->GetFoodUsed() > 198 && bot.Observation()->GetMinerals() > 800 && bot.Observation()->GetVespene() > 800) main_army = attack;
 	else if(bot.Observation()->GetFoodUsed() < 150) main_army = defend;
+
 	bot.DebugTextOnScreen("SAve minerals:", std::to_string(bot.BuildingManager().save_minerals));
 	
-	
-	//
 	if (main_army==defend) {
-		//If 
-		
-
-		//Defend when not attacking
 		auto enemy_clusters = sc2::search::Cluster(enemy_army, 8);
 		auto my_clusters = sc2::search::Cluster(zerglings, 3);
 		std::vector <std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_attack_clusters;
+
 		for (auto & e_cluster : enemy_clusters) {
 			const sc2::Unit * nearest_base = bot.EconomyManager().FindNearestBase(&e_cluster.second.front());
 			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 30) {
@@ -118,10 +113,10 @@ void ArmyManagment::MainArmyManager()
 			}
 			else {
 				for (auto &my_cluster : my_clusters) {
-					if (sc2::Distance2D(my_cluster.first,enemy_attack_clusters.front().first)<10) {
+					if (sc2::Distance2D(my_cluster.first,enemy_attack_clusters.front().first)<15) {
 						sc2::Point3D retreat_point;
-						retreat_point.x = 2 * my_cluster.first.x - enemy_attack_clusters.front().first.x;
-						retreat_point.y = 2 * my_cluster.first.y - enemy_attack_clusters.front().first.y;
+						retreat_point.x = 3 * my_cluster.first.x - enemy_attack_clusters.front().first.x;
+						retreat_point.y = 3 * my_cluster.first.y - enemy_attack_clusters.front().first.y;
 						for (auto &unit : my_cluster.second) {
 							const sc2::Unit *unit_def = &unit;
 							bot.Actions()->UnitCommand(unit_def, sc2::ABILITY_ID::SMART, retreat_point);
@@ -503,22 +498,6 @@ void ArmyManagment::MorphUnits()
 	}
 }
 
-void ArmyManagment::ClusterTest()
-{
-	sc2::Units enemy_units = bot.Observation()->GetUnits(sc2::Unit::Alliance::Enemy);
-	auto Cluster = sc2::search::Cluster(enemy_units, 10);
-	auto unit_data = bot.Observation()->GetUnitTypeData();
-	for (auto & clus : Cluster) {
-		float value = GetClusterValue(clus.first, clus.second);
-		bot.Debug()->DebugTextOut(std::to_string(value),clus.first);
-		/*for (auto & cl : clus.second) {
-			bot.Debug()->DebugSphereOut(cl.pos, 1);
-			bot.Debug()->DebugLineOut(cl.pos, clus.first,sc2::Colors::Red);
-		}*/
-		bot.Debug()->SendDebug();
-	}
-}
-
 
 sc2::Point2D ArmyManagment::GetAroundPoint(sc2::Point2D enemy_pos, sc2::Point2D unit_pos, sc2::Point2D end_pos)
 {
@@ -542,19 +521,6 @@ sc2::Point2D ArmyManagment::GetRetreatPoing(sc2::Point2D enemy_pos, sc2::Point2D
 	retreat_point.x = 2 * unit_pos.x - enemy_pos.x;
 	retreat_point.y = 2 * unit_pos.y - enemy_pos.y;
 	return retreat_point;
-}
-
-float ArmyManagment::GetClusterValue(sc2::Point3D cluster_pos, std::vector<sc2::Unit> &units)
-{
-	float total = 0;
-	float food_req = 0;
-	for (const sc2::Unit cluster_unit : units) {
-		if (!IsArmy(&cluster_unit)) continue;
-		auto unit_data = bot.Observation()->GetUnitTypeData();
-		food_req += unit_data[cluster_unit.unit_type].food_required;
-	}
-	total = food_req;
-	return total;
 }
 
 const sc2::Unit * ArmyManagment::FindNearestEnemy(const sc2::Unit * unit)
