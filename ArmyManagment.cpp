@@ -88,13 +88,13 @@ void ArmyManagment::MainArmyManager()
 	bot.DebugTextOnScreen("SAve minerals:", std::to_string(bot.BuildingManager().save_minerals));
 	
 	if (main_army==defend) {
-		auto enemy_clusters = sc2::search::Cluster(enemy_army, 8);
+		auto enemy_clusters = sc2::search::Cluster(enemy_army, 20);
 		auto my_clusters = sc2::search::Cluster(zerglings, 3);
 		std::vector <std::pair<sc2::Point3D, std::vector<sc2::Unit>>> enemy_attack_clusters;
 
 		for (auto & e_cluster : enemy_clusters) {
 			const sc2::Unit * nearest_base = bot.EconomyManager().FindNearestBase(&e_cluster.second.front());
-			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 30) {
+			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 25) {
 				enemy_attack_clusters.push_back(e_cluster);
 			}
 		}
@@ -108,20 +108,28 @@ void ArmyManagment::MainArmyManager()
 		}
 
 		if (enemy_attack_clusters.size() > 0) {
-			if (((bot.EnemyInfo().enemy_army_.size()*1.4 < zerglings.size()) && bot.EnemyInfo().enemy_army_.size()<20) || bot.EnemyInfo().enemy_army_.size()>=20 ) {
+			if (((bot.EnemyInfo().enemy_army_.size() < zerglings.size()) && bot.EnemyInfo().enemy_army_.size()<25) || bot.EnemyInfo().enemy_army_.size()>=25 ) {
 				bot.Actions()->UnitCommand(zerglings, sc2::ABILITY_ID::ATTACK, enemy_attack_clusters.front().first);
 			}
 			else {
 				for (auto &my_cluster : my_clusters) {
 					if (sc2::Distance2D(my_cluster.first,enemy_attack_clusters.front().first)<15) {
 						sc2::Point3D retreat_point;
-						retreat_point.x = 3 * my_cluster.first.x - enemy_attack_clusters.front().first.x;
-						retreat_point.y = 3 * my_cluster.first.y - enemy_attack_clusters.front().first.y;
+						retreat_point.x = 2 * my_cluster.first.x - enemy_attack_clusters.front().first.x;
+						retreat_point.y = 2 * my_cluster.first.y - enemy_attack_clusters.front().first.y;
 						for (auto &unit : my_cluster.second) {
 							const sc2::Unit *unit_def = &unit;
 							bot.Actions()->UnitCommand(unit_def, sc2::ABILITY_ID::SMART, retreat_point);
 						}
 						
+					}
+					else  {
+						for (auto &unit : my_cluster.second) {
+							if (unit.orders.empty()) {
+								const sc2::Unit *unit_def = &unit;
+								bot.Actions()->UnitCommand(unit_def, sc2::ABILITY_ID::ATTACK, enemy_attack_clusters.front().first);
+							}
+						}
 					}
 				}
 			}
@@ -237,98 +245,6 @@ void ArmyManagment::MutaManager()
 			}
 		}
 	}
-	
-
-	//
-
-
-	//sc2::Point2D attack_pos_1;
-	//sc2::Point2D attack_pos_2;
-
-	//size_t i = bot.EnemyInfo().enemy_bases_.size();
-	//if (i > 1) {
-	//	attack_pos_1 = bot.EnemyInfo().enemy_bases_[i - 1].pos;
-	//	attack_pos_2 = bot.EnemyInfo().enemy_bases_[i - 2].pos;
-	//}
-	//else if(i == 1){
-	//	attack_pos_1 = bot.EnemyInfo().enemy_bases_[i - 1].pos;
-	//	attack_pos_2 = bot.EnemyInfo().enemy_bases_[i - 1].pos;
-	//}
-	//for (auto& worker : workers) {
-	//	if (muta_squad_1.size() > 0) {
-	//		if (sc2::Distance2D(muta_squad_1[0]->pos, worker->pos) < 10) {
-	//			workers_in_range_1.push_back(worker);
-	//		}
-	//	}
-	//	if (!muta_squad_1_sent && muta_squad_1.size() > 14) {
-	//		bot.Actions()->UnitCommand(muta_squad_1, sc2::ABILITY_ID::ATTACK, attack_pos_1);
-	//		muta_squad_1_sent = true;
-	//	}
-
-	//	if (muta_squad_1.size() > 0) {
-	//		/*if (bot.frame % 100 == 0) {
-	//			auto muta_clusters = sc2::search::Cluster(muta_squad_1, 4);
-	//			for (auto & cluster : muta_clusters) {
-	//				for (auto & muta : cluster.second) {
-	//					bot.Actions()->UnitCommand(&muta, sc2::ABILITY_ID::SMART, cluster.first);
-	//				}
-	//			}
-	//		}*/
-	//		
-	//		for (auto &muta : muta_squad_1) {
-	//			auto anti_air_1 = FindNearstEnemyCluster(muta, enemy_clusters);
-	//			auto closest_worker = FindNearestEnemyUnit(muta, sc2::UNIT_TYPEID::TERRAN_SCV);
-	//			auto closest_turret = FindNearestEnemyUnit(muta, sc2::UNIT_TYPEID::TERRAN_MISSILETURRET);
-	//			bot.Debug()->DebugSphereOut(anti_air_1.first, 7, sc2::Colors::Red);
-	//			if (closest_worker) {
-	//				if (sc2::Distance2D(closest_worker->pos, muta->pos) < 10 && target == nullptr) {
-	//					target = closest_worker;
-	//				}
-	//			}
-	//			if (closest_turret) {
-	//				if (sc2::Distance2D(closest_turret->pos, muta->pos) < 6 && !turret_found) {
-	//					target = closest_turret;
-	//					turret_found = true;
-	//				}
-	//			}
-	//			if (sc2::Distance2D(muta->pos, anti_air_1.first) < 10 || muta->health < muta->health_max * 0.3) {
-	//				sc2::Point3D retreat_point;
-	//				retreat_point.x = 2 * muta->pos.x - anti_air_1.first.x;
-	//				retreat_point.y = 2 * muta->pos.y - anti_air_1.first.y;
-	//				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::SMART, retreat_point);
-	//			}
-	//		/*	else if (workers_in_range_1.size() > 0 && muta->orders.size() == 0) {
-	//				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, workers_in_range_1.front());
-	//				bot.Debug()->DebugSphereOut(workers_in_range_1.front()->pos, 3, sc2::Colors::White);
-
-	//			}*/
-	//			else if (muta_squad_1_sent && muta->orders.size() == 0 && target != nullptr) {
-	//				if (target->is_on_screen) {
-	//					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, target);
-	//				}
-	//				else {
-	//					bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, target->pos);
-	//				}
-	//				bot.Debug()->DebugSphereOut(target->pos, 3, sc2::Colors::White);
-
-	//			}
-	//			else if (muta_squad_1_sent && muta->orders.size() == 0 ) {
-	//				bot.Actions()->UnitCommand(muta, sc2::ABILITY_ID::ATTACK, attack_pos_1);
-	//				sc2::Point3D attack_pos_1_debug(attack_pos_1.x, attack_pos_1.y, 2);
-	//				bot.Debug()->DebugSphereOut(attack_pos_1_debug, 3, sc2::Colors::White);
-
-	//			}
-	//		}
-	//	}
-	//}
-	//if (target != nullptr) {
-	//	auto target_last = bot.Observation()->GetUnit(target->tag);
-	//	if (!target_last) {
-	//			target = nullptr;
-	//			turret_found = false;
-	//	}
-	//}
-	//bot.Debug()->SendDebug();
 }
 
 void ArmyManagment::QueenDefenceManager()
@@ -384,21 +300,25 @@ void ArmyManagment::HarassManager()
 	sc2::Units army = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_ZERGLING }));
 
 
-	if (main_army_.size() > 30 && harass_squad_1.empty() && harass_squad_2.empty()) {
-		harass_squad_1.assign(main_army_.begin(), main_army_.begin() + 6);
-		main_army_.erase(main_army_.begin(), main_army_.begin() + 6);
-		harass_squad_2.assign(main_army_.begin(), main_army_.begin() + 6);
-		main_army_.erase(main_army_.begin(), main_army_.begin() + 6);
-		bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::SMART, harass_squad_1.front()->pos);
-		bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::SMART, harass_squad_2.front()->pos);
 
-	}
 	if (bot.EnemyInfo().enemy_bases_.size() > 2) {
-		
+		if (main_army_.size() > 20) {
+			if (harass_squad_1.empty()) {
+				harass_squad_1.assign(main_army_.begin(), main_army_.begin() + 6);
+				main_army_.erase(main_army_.begin(), main_army_.begin() + 6);
+				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::SMART, harass_squad_1.front()->pos);
+			}
+			if (harass_squad_2.empty()) {
+				harass_squad_2.assign(main_army_.begin(), main_army_.begin() + 6);
+				main_army_.erase(main_army_.begin(), main_army_.begin() + 6);
+				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::SMART, harass_squad_2.front()->pos);
+			}
+
+		}
 		if (!harass_squad_1.empty()) {
 			// if squad units are grouped and squad leader has no orders -> go to the enemy base
 			if (UnitsGrouped(harass_squad_1, 4) && harass_squad_1.front()->orders.empty()) {
-				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::SMART, bot.EnemyInfo().enemy_bases_.end()[-2].pos );
+				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::SMART, bot.EnemyInfo().enemy_bases_.end()[-1].pos );
 			}
 			// else if no orders group squad
 			else if (harass_squad_1.front()->orders.empty()) {
@@ -414,14 +334,14 @@ void ArmyManagment::HarassManager()
 			else if (turret && sc2::Distance2D(turret->pos, harass_squad_1.front()->pos) < 15) {
 				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::ATTACK, turret);
 			}
-			else if (sc2::Distance2D(bot.EnemyInfo().enemy_bases_.end()[-2].pos, harass_squad_1.front()->pos) < 6) {
-				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.end()[-2].pos);
+			else if (sc2::Distance2D(bot.EnemyInfo().enemy_bases_.end()[-1].pos, harass_squad_1.front()->pos) < 6) {
+				bot.Actions()->UnitCommand(harass_squad_1, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.end()[-1].pos);
 			}
 		}
 		if (!harass_squad_2.empty()) {
 			// if squad units are grouped and squad leader has no orders -> go to the enemy base
 			if (UnitsGrouped(harass_squad_2, 4) && harass_squad_2.front()->orders.empty()) {
-				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::SMART, bot.EnemyInfo().enemy_bases_.end()[-3].pos);
+				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::SMART, bot.EnemyInfo().enemy_bases_.end()[-2].pos);
 			}
 			// else if no orders group squad
 			else if (harass_squad_2.front()->orders.empty()) {
@@ -438,8 +358,8 @@ void ArmyManagment::HarassManager()
 			else if (turret && sc2::Distance2D(turret->pos, harass_squad_2.front()->pos) < 15) {
 				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::ATTACK, turret);
 			}
-			else if (sc2::Distance2D(bot.EnemyInfo().enemy_bases_.end()[-3].pos, harass_squad_2.front()->pos) < 6) {
-				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.end()[-3].pos);
+			else if (sc2::Distance2D(bot.EnemyInfo().enemy_bases_.end()[-2].pos, harass_squad_2.front()->pos) < 6) {
+				bot.Actions()->UnitCommand(harass_squad_2, sc2::ABILITY_ID::ATTACK, bot.EnemyInfo().enemy_bases_.end()[-2].pos);
 			}
 
 

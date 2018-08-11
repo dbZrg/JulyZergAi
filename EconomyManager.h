@@ -15,7 +15,7 @@ class EconomyManager
 
 	void EconomyManagerAll();		//all submodules combined
 
-	void ProductionManager();
+
 	void EconomyOptimizer();
 	void QueenInjectManager();
 	void SetWorkerWaypoint();
@@ -40,7 +40,7 @@ class EconomyManager
 	size_t AlreadyTrainingCount(const sc2::Units units, sc2::ABILITY_ID ability) const;
 	bool WorkersNeeded(sc2::Units & units, sc2::Units & units2);
 	
-
+	int drones_per_ext;
 	bool creep_tumors_placed = false;
 
 	

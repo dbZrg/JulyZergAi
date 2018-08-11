@@ -28,7 +28,7 @@ void ProductionManager::All()
 
 	QueenProduction();
 
-	if (GetSupplyCap() < GetSupplyOffset() && GetSupplyOffset()<201) { OviProduction(larva);  return; }
+	if (GetSupplyCap() < GetSupplyOffset() && bot.Observation()->GetFoodCap()!=200) { OviProduction(larva);  return; }
 	if (production_state == army)			{ ArmyProduction(larva); return; }
 	if (production_state == drone)			{ DroneProduction(larva); return; }
 
@@ -89,7 +89,6 @@ void ProductionManager::DroneProduction(const sc2::Unit *larva)
 
 void ProductionManager::OviProduction(const sc2::Unit *larva)
 {
-	const sc2::Units eggs = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EGG));
 	int32_t mineral_count = bot.Observation()->GetMinerals();
 	
 	if (mineral_count > 99) {
@@ -126,9 +125,9 @@ ProductionState ProductionManager::GetProductionState()
 	int32_t my_supp = bot.Observation()->GetFoodUsed();
 
 
-	if (enemy_army_supp > my_army_supp*1.3 ||
+	if (enemy_army_supp > my_army_supp ||
 		bot.ArmyManagment().we_are_under_attack ||
-		workers_count > 78 ||
+		workers_count > 75 ||
 		my_supp > 38 && my_army_supp <15
 		) 
 	{

@@ -56,9 +56,17 @@ void EconomyManager::EconomyOptimizer()
 			}
 		}
 	}
-
+	if (FindNonOptimalMiningLoc() != nullptr  && bot.Observation()->GetMinerals() + 1000 < bot.Observation()->GetVespene()) {
+		drones_per_ext = 2;
+	}
+	else if (bot.Observation()->GetMinerals() > bot.Observation()->GetVespene() || bot.Observation()->GetVespene() < 300) {
+		drones_per_ext = 0;
+	}
+	else if (workers.size() < 16) {
+		drones_per_ext = 0;
+	}
 	for (auto &extractor : extractors) {
-		int count = extractor->assigned_harvesters - extractor->ideal_harvesters;
+		int count = extractor->assigned_harvesters - (extractor->ideal_harvesters - drones_per_ext);
 		if (count > 0) {
 			const sc2::Unit * target = nullptr;
 			target = FindNearestWorker(extractor);

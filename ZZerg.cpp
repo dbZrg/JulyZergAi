@@ -53,6 +53,7 @@ void ZZerg::OnGameStart()
 	army.ovi_scout_loc_.front().first = overlords.front();
 	enemy_info.EnemyInfoInit();
 	army.init();
+	eco.drones_per_ext = 0;
 }
 
 void ZZerg::OnStep()
