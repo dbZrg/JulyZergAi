@@ -28,7 +28,7 @@ void ProductionManager::All()
 
 	QueenProduction();
 
-	if (GetSupplyCap() < GetSupplyOffset()) { OviProduction(larva);  return; }
+	if (GetSupplyCap() < GetSupplyOffset() && GetSupplyOffset()<201) { OviProduction(larva);  return; }
 	if (production_state == army)			{ ArmyProduction(larva); return; }
 	if (production_state == drone)			{ DroneProduction(larva); return; }
 
@@ -126,7 +126,7 @@ ProductionState ProductionManager::GetProductionState()
 	int32_t my_supp = bot.Observation()->GetFoodUsed();
 
 
-	if (enemy_army_supp > my_army_supp*1.5 ||
+	if (enemy_army_supp > my_army_supp*1.3 ||
 		bot.ArmyManagment().we_are_under_attack ||
 		workers_count > 78 ||
 		my_supp > 38 && my_army_supp <15

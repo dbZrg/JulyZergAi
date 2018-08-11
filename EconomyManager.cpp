@@ -26,7 +26,7 @@ EconomyManager::~EconomyManager()
 void EconomyManager::EconomyManagerAll()
 {
 	
-	/*ProductionManager();*/
+	
 	QueenInjectManager();
 	EconomyOptimizer();
 	if (!bot.worker_rally_set) {
@@ -37,95 +37,6 @@ void EconomyManager::EconomyManagerAll()
 	
 }
 
-void EconomyManager::ProductionManager()
-{
-
-	auto start = std::chrono::high_resolution_clock::now();
-		
-	sc2::Units bases = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_HATCHERY,sc2::UNIT_TYPEID::ZERG_LAIR }));
-		sc2::Units extractors = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EXTRACTOR));
-		sc2::Units workers = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_DRONE));
-		sc2::Units queens = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_QUEEN));
-		sc2::Units s_pool = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPAWNINGPOOL));
-		sc2::Units larva = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_LARVA));
-		sc2::Units zerglings = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_ZERGLING));
-		const sc2::Units eggs = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EGG));
-		const sc2::Unit * target_base = nullptr;
-
-		//adding workers in production(eggs) to current worker count
-		bot.num_of_workers_in_prod = AlreadyTrainingCount(eggs, sc2::ABILITY_ID::TRAIN_DRONE);
-		bot.num_of_workers = workers.size() + bot.num_of_workers_in_prod;				// todo: workers while in extractor are invisible to observation - add them to num of workers
-		int32_t mineral_count = bot.Observation()->GetMinerals();
-
-		
-		//QUEEN PRODUCTION 
-		size_t queen_num = queens.size() + AlreadyTrainingCount(bases, sc2::ABILITY_ID::TRAIN_QUEEN);
-		if (bot.pool &&  mineral_count > 149 && larva.size()>0 && queen_num <= bot.GetFinishedBasesCount() + 8 ) {
-			for (auto & BQpair : bot.base_queen) {
-				if (BQpair.first == nullptr) continue;
-				if ((BQpair.first->orders.size() == 0 && BQpair.second == nullptr)) {
-					bot.Actions()->UnitCommand(BQpair.first, sc2::ABILITY_ID::TRAIN_QUEEN);
-				}
-			}
-			//check if all inject queens are trained
-			bool need_inject_queen = false;
-			for (auto & BQpair : bot.base_queen) {
-				if (BQpair.second == nullptr) {
-					need_inject_queen = true;
-				}
-			}
-			//if there is no need for inject queen, train creep queen
-			if (bot.creep_queen == 0 && need_inject_queen==false && !AlreadyTraining(bases,sc2::ABILITY_ID::TRAIN_QUEEN)) {
-				bot.Actions()->UnitCommand(bot.base_queen.front().first, sc2::ABILITY_ID::TRAIN_QUEEN);
-			}
-			if (bot.creep_queen != 0 && queen_num < bot.GetFinishedBasesCount() + 8 ) {
-				for (auto &base : bases) {
-					if (base->orders.size() == 0) {
-						bot.Actions()->UnitCommand(base, sc2::ABILITY_ID::TRAIN_QUEEN);
-						break;
-					}
-				}
-			}
-		}
-		 //on bigger supply build overlord earlier
-		size_t build_ovi_when_supp = 5;
-		if (bot.Observation()->GetFoodUsed() > 30) { 
-			build_ovi_when_supp = 12; 
-		}
-		else { 
-			build_ovi_when_supp = 5;
-		}
-		larva = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_LARVA));
-		int current_supply = bot.Observation()->GetFoodUsed();
-		for (auto &larv : larva) {
-
-			//Overlord production
-			if (larva.size()>0 && mineral_count > 99 && (bot.Observation()->GetFoodCap() + (AlreadyTrainingCount(eggs,sc2::ABILITY_ID::TRAIN_OVERLORD)*8)) < (bot.Observation()->GetFoodUsed() + build_ovi_when_supp)) {
-					bot.Actions()->UnitCommand(larv, sc2::ABILITY_ID::TRAIN_OVERLORD);
-					return;
-			}
-			
-			if (larva.size() > 0 && mineral_count > 99 && s_pool.size() > 0 && current_supply < 20) {
-				bot.Actions()->UnitCommand(larv, sc2::ABILITY_ID::TRAIN_ZERGLING);
-				return;
-			}
-			//Drone production
-			if (mineral_count > 99 && (bot.num_of_workers < (bot.GetCurrnetWorkerLimit(true)+2)) && bot.num_of_workers < 76 && larva.size()>0 ) {
-				bot.Actions()->UnitCommand(larv, sc2::ABILITY_ID::TRAIN_DRONE);
-				return;
-			}
-			if (larva.size() > 0 && mineral_count > 99 && s_pool.size() > 0 && current_supply < 200) {
-				bot.Actions()->UnitCommand(larv, sc2::ABILITY_ID::TRAIN_ZERGLING);
-				return;
-			}
-			
-		}
-
-		auto stop = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = stop - start;
-		if (bot.frame % 30 == 0)std::cout << "Economy manager -> production manager : " << elapsed.count() << " s\n";
-	
-}
 
 void EconomyManager::EconomyOptimizer()
 {
@@ -427,6 +338,7 @@ void EconomyManager::UpgradesManager()
 	sc2::Units bane_nest = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_BANELINGNEST));
 	sc2::Units lair = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_LAIR));
 	sc2::Units spire = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_SPIRE));
+	sc2::Units evos = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EVOLUTIONCHAMBER));
 	
 	if (bot.Observation()->GetMinerals() > 150 && bot.Observation()->GetVespene() > 150 && bot.pool) {
 		bot.Actions()->UnitCommand(pools.front(), sc2::ABILITY_ID::RESEARCH_ZERGLINGMETABOLICBOOST);
@@ -437,8 +349,19 @@ void EconomyManager::UpgradesManager()
 	if (bot.Observation()->GetMinerals() > 150 && bot.Observation()->GetVespene() > 150 && bot.pool ) {
 		bot.Actions()->UnitCommand(bot.main_base, sc2::ABILITY_ID::MORPH_LAIR);
 	}
-	if (bot.Observation()->GetMinerals() > 100 && bot.Observation()->GetVespene() > 100 && bot.pool && spire.size()>0 && spire.front()->orders.size() == 0) {
-		bot.Actions()->UnitCommand(spire, sc2::ABILITY_ID::RESEARCH_ZERGFLYERATTACKLEVEL1);
+	if (bot.Observation()->GetMinerals() > 100 && bot.Observation()->GetVespene() > 100 && bot.pool && spire.size()>0 && spire.front()->orders.size() == 0 && spire.front()->build_progress == 1) {
+		auto ab = bot.Query()->GetAbilitiesForUnit(spire.front(), true);
+		if (!ab.abilities.empty()) {
+			bot.Actions()->UnitCommand(spire.front(), ab.abilities.front().ability_id.ToType());
+		}
+	}
+	for (auto &evo : evos) {
+		if (evo->orders.empty() && evo->build_progress == 1) {
+			auto ab = bot.Query()->GetAbilitiesForUnit(evo, true);
+			if (!ab.abilities.empty()) {
+				bot.Actions()->UnitCommand(evo, ab.abilities.front().ability_id.ToType());
+			}
+		}
 	}
 	
 }

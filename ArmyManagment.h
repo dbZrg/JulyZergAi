@@ -44,9 +44,9 @@ public:
 	
 	bool IsStructure(const sc2::Unit *unit)const;
 	bool IsArmy(const sc2::Unit *unit)const;
-	bool UnitsGrouped(std::vector<const sc2::Unit *> &units, float radius);
-	bool GroupUnits(std::vector<const sc2::Unit *> &units, float radius);
-
+	bool UnitsGrouped(sc2::Units units, float radius);
+	void GroupUnits(sc2::Units units);
+	sc2::Units													main_army_;
 	std::vector <const sc2::Unit*>								defense_queens_;
 	std::vector<std::pair<const sc2::Unit*, sc2::Point3D>>		ovi_scout_loc_;
 	std::vector<sc2::Point2D>									inital_scout_pos_;

@@ -100,6 +100,11 @@ void ZZerg::OnUnitIdle(const sc2::Unit * unit)
 
 void ZZerg::OnUnitCreated(const sc2::Unit * unit)
 {
+	if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_ZERGLING)
+	{
+		army.main_army_.push_back(unit);
+
+	}
 	if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_QUEEN )
 	{
 		//Checking if there is queenless base 
@@ -152,6 +157,10 @@ void ZZerg::OnUnitCreated(const sc2::Unit * unit)
 void ZZerg::OnUnitDestroyed(const sc2::Unit * unit)
 {
 	enemy_info.EnemyUnitDestroyed(*unit);
+
+	army.main_army_.erase(std::remove_if(army.main_army_.begin(), army.main_army_.end(),
+		[&](const sc2::Unit * army_unit) { return unit->tag == army_unit->tag; }),
+		army.main_army_.end());
 
 	army.harass_squad_1.erase(std::remove_if(army.harass_squad_1.begin(), army.harass_squad_1.end(),
 		[&](const sc2::Unit * harass_unit) { return unit->tag == harass_unit->tag; }),
