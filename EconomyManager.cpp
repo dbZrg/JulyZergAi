@@ -507,9 +507,9 @@ const sc2::Unit * EconomyManager::FindNonOptimalMiningLoc()
 	sc2::Units bases = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_HATCHERY));
 	sc2::Units extractors = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnit(sc2::UNIT_TYPEID::ZERG_EXTRACTOR));
 
-	for (auto & extr : extractors) {
-		if (extr->assigned_harvesters < extr->ideal_harvesters) return extr;
-	}
+	//for (auto & extr : extractors) {
+	//	if (extr->assigned_harvesters < extr->ideal_harvesters) return extr;
+	//}
 	for (auto & base : bases) {
 		if (base->assigned_harvesters < base->ideal_harvesters) return FindNearestMineralNode(base);
 	}

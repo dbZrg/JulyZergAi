@@ -94,42 +94,28 @@ void ArmyManagment::MainArmyManager()
 
 		for (auto & e_cluster : enemy_clusters) {
 			const sc2::Unit * nearest_base = bot.EconomyManager().FindNearestBase(&e_cluster.second.front());
-			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 25) {
+			if (sc2::Distance2D(nearest_base->pos, e_cluster.first) < 30) {
 				enemy_attack_clusters.push_back(e_cluster);
 			}
 		}
 		if (enemy_attack_clusters.size() > 0) we_are_under_attack = true;
 		else we_are_under_attack = false;
 
-		for (auto & unit : zerglings) {
+		/*for (auto & unit : zerglings) {
 			if (unit->orders.size() == 0 && sc2::Distance2D(unit->pos, bot.staging_location_)>10 && !we_are_under_attack) {
 				bot.Actions()->UnitCommand(unit, sc2::ABILITY_ID::SMART, bot.staging_location_);
 			}
-		}
+		}*/
 
 		if (enemy_attack_clusters.size() > 0) {
 			if (((bot.EnemyInfo().enemy_army_.size() < zerglings.size()) && bot.EnemyInfo().enemy_army_.size()<25) || bot.EnemyInfo().enemy_army_.size()>=25 ) {
 				bot.Actions()->UnitCommand(zerglings, sc2::ABILITY_ID::ATTACK, enemy_attack_clusters.front().first);
 			}
 			else {
-				for (auto &my_cluster : my_clusters) {
-					if (sc2::Distance2D(my_cluster.first,enemy_attack_clusters.front().first)<15) {
-						sc2::Point3D retreat_point;
-						retreat_point.x = 2 * my_cluster.first.x - enemy_attack_clusters.front().first.x;
-						retreat_point.y = 2 * my_cluster.first.y - enemy_attack_clusters.front().first.y;
-						for (auto &unit : my_cluster.second) {
-							const sc2::Unit *unit_def = &unit;
-							bot.Actions()->UnitCommand(unit_def, sc2::ABILITY_ID::SMART, retreat_point);
-						}
-						
-					}
-					else  {
-						for (auto &unit : my_cluster.second) {
-							if (unit.orders.empty()) {
-								const sc2::Unit *unit_def = &unit;
-								bot.Actions()->UnitCommand(unit_def, sc2::ABILITY_ID::ATTACK, enemy_attack_clusters.front().first);
-							}
-						}
+				for (auto &ling : zerglings) {
+					auto enemy = FindNearestEnemyArmy(ling);
+					if (sc2::Distance2D(ling->pos,enemy->pos)<15) {		
+						bot.Actions()->UnitCommand(ling, sc2::ABILITY_ID::SMART, GetRetreatPoing(enemy->pos,ling->pos));
 					}
 				}
 			}

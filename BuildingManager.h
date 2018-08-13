@@ -18,7 +18,9 @@ public:
 	bool TryBuildBaneling();
 	bool TryBuildSpire();
 	bool TryBuildSpore(const sc2::Unit *base);
+	bool TryBuildSpine(const sc2::Unit *base);
 	bool TryBuildEvo();
+	
 
 	bool OrderInProgress( sc2::AbilityID ability_id);  
 	size_t OrderCount(sc2::AbilityID ability_id);

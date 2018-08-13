@@ -125,10 +125,11 @@ ProductionState ProductionManager::GetProductionState()
 	int32_t my_supp = bot.Observation()->GetFoodUsed();
 
 
-	if (enemy_army_supp > my_army_supp ||
+	if (enemy_army_supp > my_army_supp * 1.5||
 		bot.ArmyManagment().we_are_under_attack ||
 		workers_count > 75 ||
-		my_supp > 38 && my_army_supp <15
+		my_supp > 38 && my_army_supp <15 ||
+		my_supp > 100 && my_army_supp <35
 		) 
 	{
 		return army;

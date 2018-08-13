@@ -24,10 +24,12 @@ public:
 	std::vector<sc2::Unit>								enemy_buildings;
 	std::map <float, int>								enemy_unit_count;
 	
-
+	bool EarlyAggression() const;
+	size_t GetEnemyUnitsCount(std::vector<sc2::UNIT_TYPEID> unit_types) const;
 	bool UnitAlreadySeen(const sc2::Unit *unit, sc2::Units &units);
 	float StaticDefCount(sc2::Unit& unit);
 
+	
 	float GetEnemySupply();
 	float GetEnemyArmySupp() const;
 	float GetEnemyAirCount() const;

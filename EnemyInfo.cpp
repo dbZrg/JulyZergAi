@@ -97,6 +97,31 @@ void EnemyInfo::EnemyUnitDestroyed(const sc2::Unit & unit)
 	
 }
 
+bool EnemyInfo::EarlyAggression() const
+{
+	if (bot.Observation()->GetFoodUsed() < 40 && GetEnemyUnitsCount({sc2::UNIT_TYPEID::TERRAN_BARRACKS,sc2::UNIT_TYPEID::TERRAN_FACTORY,sc2::UNIT_TYPEID::PROTOSS_GATEWAY,sc2::UNIT_TYPEID::PROTOSS_ROBOTICSFACILITY }) > 2) {
+		return true;
+	}
+	return false;
+}
+
+size_t EnemyInfo::GetEnemyUnitsCount(std::vector<sc2::UNIT_TYPEID> unit_types) const
+{
+	size_t count = 0;
+	for (auto & type : unit_types) {
+		for (auto & unit : enemy_buildings) {
+			if (unit.unit_type.ToType() == type) count++;
+		}
+		for (auto & unit : enemy_army_) {
+			if (unit.unit_type.ToType() == type) count++;
+		}
+		for (auto & unit : enemy_bases_) {
+			if (unit.unit_type.ToType() == type) count++;
+		}
+	}
+	return count;
+}
+
 bool EnemyInfo::UnitAlreadySeen(const sc2::Unit *unit, sc2::Units &units)
 {
 	for (auto & enemy_unit : units) {

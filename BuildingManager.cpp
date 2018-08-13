@@ -34,8 +34,14 @@ void BuildingManager::BuildingManagerStep()
 	if (bot.Observation()->GetMinerals() > 300) save_minerals = false;
 	//Build Order
 
-	//Fast expand
-	if (bot.frame % 50 == 0) {
+	if (bot.EnemyInfo().EarlyAggression()) {
+		for (auto & base : hatches) {
+			size_t spine_count = GetStaticDefCount(base).second;
+			if (spine_count < 3) { TryBuildSpine(base); }
+		}
+	}
+
+	if (bot.frame % 25 == 0) {
 		if (bot.EnemyInfo().GetEnemyAirCount() == 0) {
 
 		}
@@ -284,10 +290,6 @@ bool BuildingManager::TryBuildSpawningPool()
 	sc2::Point2D pool_place;
 	pool_place.x = 2 * bot.startLocation_.x - mineral_near_base.x;
 	pool_place.y = 2 * bot.startLocation_.y - mineral_near_base.y;
-	sc2::Point3D debug;
-	debug.x = pool_place.x;
-	debug.y = pool_place.y;
-	debug.z = bot.startLocation_.z;
 
 	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPAWNINGPOOL, sc2::UNIT_TYPEID::ZERG_DRONE, pool_place,true);
 }
@@ -301,10 +303,6 @@ bool BuildingManager::TryBuildBaneling()
 	sc2::Point2D pool_place;
 	pool_place.x = 2 * bot.startLocation_.x - mineral_near_base.x;
 	pool_place.y = 2 * bot.startLocation_.y - mineral_near_base.y;
-	sc2::Point3D debug;
-	debug.x = pool_place.x;
-	debug.y = pool_place.y;
-	debug.z = bot.startLocation_.z;
 	pool_place.x += sc2::GetRandomInteger(-4, 4);
 	pool_place.y += sc2::GetRandomInteger(-4, 4);
 	
@@ -320,10 +318,6 @@ bool BuildingManager::TryBuildSpire()
 	sc2::Point2D pool_place;
 	pool_place.x = 2 * bot.startLocation_.x - mineral_near_base.x;
 	pool_place.y = 2 * bot.startLocation_.y - mineral_near_base.y;
-	sc2::Point3D debug;
-	debug.x = pool_place.x;
-	debug.y = pool_place.y;
-	debug.z = bot.startLocation_.z;
 	pool_place.x += sc2::GetRandomInteger(-4, 4);
 	pool_place.y += sc2::GetRandomInteger(-4, 4);
 
@@ -338,6 +332,20 @@ bool BuildingManager::TryBuildSpore(const sc2::Unit *base)
 		spore_locs.push_back(sc2::Point2D(base->pos.x + (3.5 * cos(x)), base->pos.y + (3.5 * sin(x))));
 	}
 	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPORECRAWLER, sc2::UNIT_TYPEID::ZERG_DRONE, sc2::GetRandomEntry(spore_locs), true);
+}
+
+bool BuildingManager::TryBuildSpine(const sc2::Unit * base)
+{
+	const sc2::ObservationInterface* observation = bot.Observation();
+
+	sc2::Point2D mineral_near_base = bot.EconomyManager().FindNearestMineralNode(base)->pos;
+
+	sc2::Point2D pool_place;
+	pool_place.x = 1.8 * base->pos.x - mineral_near_base.x;
+	pool_place.y = 1.8 * base->pos.y - mineral_near_base.y;
+	pool_place.x += sc2::GetRandomInteger(-4, 4);
+	pool_place.y += sc2::GetRandomInteger(-4, 4);
+	return TryBuildStructure(sc2::ABILITY_ID::BUILD_SPINECRAWLER, sc2::UNIT_TYPEID::ZERG_DRONE,pool_place, true);
 }
 
 bool BuildingManager::TryBuildEvo()
@@ -393,9 +401,9 @@ std::pair<size_t, size_t> BuildingManager::GetStaticDefCount(const sc2::Unit * u
 	std::pair<size_t, size_t> spore_spine(0, 0);
 	sc2::Units static_def = bot.Observation()->GetUnits(sc2::Unit::Alliance::Self, sc2::IsUnits({ sc2::UNIT_TYPEID::ZERG_SPORECRAWLER,sc2::UNIT_TYPEID::ZERG_SPINECRAWLER }));
 	for (auto &def_unit : static_def) {
-		if (sc2::Distance2D(def_unit->pos, unit->pos) < 6) {
+		if (sc2::Distance2D(def_unit->pos, unit->pos) < 8) {
 			if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_SPORECRAWLER) spore_spine.first++;
-			else if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_SPINECRAWLER) spore_spine.second++;
+			if (unit->unit_type.ToType() == sc2::UNIT_TYPEID::ZERG_SPINECRAWLER) spore_spine.second++;
 		}
 	}
 	return spore_spine;
